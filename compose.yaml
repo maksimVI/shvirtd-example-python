@@ -1,0 +1,45 @@
+version: '3.8'
+
+include:
+    - proxy.yaml
+
+x-env_file: &env_file
+  env_file:
+    - .env
+x-restart: &restart
+  restart: always 
+
+services:
+
+  web:
+    image: cr.yandex/crpodtl1813r1dmb31jf/py-app:1.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    networks:
+      backend:
+        ipv4_address: 172.20.0.5
+    ports:
+      - "5000:5000"
+    <<: [*env_file, *restart]
+    environment:
+      - DB_HOST=db
+      - DB_USER=${MYSQL_USER}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_NAME=${MYSQL_DATABASE}
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8
+    networks:
+      backend:
+        ipv4_address: 172.20.0.10
+    ports:
+      - "3306:3306"
+    <<: [*env_file, *restart]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
